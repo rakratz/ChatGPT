@@ -1,0 +1,6 @@
+code,meaning,category
+CLEAN,Limpeza programada (interna),Planejada
+SETUP,Troca de SKU (interna),Planejada
+AJUST,Ajuste/Setup fino,Não planejada
+FALHA,Falha de equipamento,Não planejada
+PARM,Falta de matéria-prima,Não planejada

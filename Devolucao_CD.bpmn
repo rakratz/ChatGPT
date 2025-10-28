@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Defs_Devolucao_CD" targetNamespace="http://example.com/bpmn">
+  <bpmn:process id="Process_Devolucao_CD" name="Devolução no Centro de Distribuição" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Transportador" name="Transportador">
+        <bpmn:flowNodeRef>Start_Inicio</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RegistrarDoca</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Recebimento" name="Recebimento">
+        <bpmn:flowNodeRef>Task_ConferirNotasAgendar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_NotasOk</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_Agendamento</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_Timer_Aguardar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_Message_AvisarAgendar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_FaltaAgendamento</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RegistrarWMS</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_DivergenciaFiscal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Concluida</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Qualidade" name="Qualidade">
+        <bpmn:flowNodeRef>Task_Inspecionar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gw_Aprovado</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SegregarCAPA</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_NaoConforme</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Fiscal" name="Fiscal">
+        <bpmn:flowNodeRef>Task_RegularizarFiscal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_AposFiscal</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- Eventos e Atividades -->
+    <bpmn:startEvent id="Start_Inicio" name="Início">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_RegistrarDoca" name="Registrar doca">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Task_ConferirNotasAgendar" name="Conferir notas e agendar">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:incoming>Flow_5_Nao</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gw_NotasOk" name="Notas ok?">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4_Sim</bpmn:outgoing>
+      <bpmn:outgoing>Flow_5_Nao</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:exclusiveGateway id="Gw_Agendamento" name="Agendamento existente?">
+      <bpmn:incoming>Flow_4_Sim</bpmn:incoming>
+      <bpmn:outgoing>Flow_6_Sim</bpmn:outgoing>
+      <bpmn:outgoing>Flow_7_Nao</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:intermediateCatchEvent id="Event_Timer_Aguardar" name="Aguardar janela agendada">
+      <bpmn:incoming>Flow_6_Sim</bpmn:incoming>
+      <bpmn:outgoing>Flow_9</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerDef_Aguardar"/>
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:intermediateThrowEvent id="Event_Message_AvisarAgendar" name="Avisar transportador para agendar">
+      <bpmn:incoming>Flow_7_Nao</bpmn:incoming>
+      <bpmn:outgoing>Flow_8</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MsgDef_Avisar"/>
+    </bpmn:intermediateThrowEvent>
+
+    <bpmn:endEvent id="End_FaltaAgendamento" name="Encerrar por falta de agendamento">
+      <bpmn:incoming>Flow_8</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:userTask id="Task_Inspecionar" name="Inspecionar integridade e validade">
+      <bpmn:incoming>Flow_9</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="Gw_Aprovado" name="Aprovado na inspeção?">
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:outgoing>Flow_11_Sim</bpmn:outgoing>
+      <bpmn:outgoing>Flow_12_Nao</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:task id="Task_SegregarCAPA" name="Segregar em quarentena e abrir CAPA">
+      <bpmn:incoming>Flow_12_Nao</bpmn:incoming>
+      <bpmn:outgoing>Flow_13</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:endEvent id="End_NaoConforme" name="Encerrar com não conformidade">
+      <bpmn:incoming>Flow_13</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:task id="Task_RegistrarWMS" name="Registrar retorno no WMS">
+      <bpmn:incoming>Flow_11_Sim</bpmn:incoming>
+      <bpmn:outgoing>Flow_14</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:exclusiveGateway id="Gw_DivergenciaFiscal" name="Divergência fiscal?">
+      <bpmn:incoming>Flow_14</bpmn:incoming>
+      <bpmn:outgoing>Flow_15_Nao</bpmn:outgoing>
+      <bpmn:outgoing>Flow_16_Sim</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:endEvent id="End_Concluida" name="Devolução concluída">
+      <bpmn:incoming>Flow_15_Nao</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:userTask id="Task_RegularizarFiscal" name="Regularizar divergência fiscal">
+      <bpmn:incoming>Flow_16_Sim</bpmn:incoming>
+      <bpmn:outgoing>Flow_17</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="End_AposFiscal" name="Encerrar após regularização fiscal">
+      <bpmn:incoming>Flow_17</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Anotações de Tempo -->
+    <bpmn:textAnnotation id="Ann_Tempo_RegistrarDoca">
+      <bpmn:text>Tempo</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Assoc_RegistrarDoca_Tempo" sourceRef="Task_RegistrarDoca" targetRef="Ann_Tempo_RegistrarDoca"/>
+
+    <bpmn:textAnnotation id="Ann_Tempo_ConferirAgendar">
+      <bpmn:text>Tempo</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Assoc_ConferirAgendar_Tempo" sourceRef="Task_ConferirNotasAgendar" targetRef="Ann_Tempo_ConferirAgendar"/>
+
+    <bpmn:textAnnotation id="Ann_Tempo_Inspecionar">
+      <bpmn:text>Tempo</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Assoc_Inspecionar_Tempo" sourceRef="Task_Inspecionar" targetRef="Ann_Tempo_Inspecionar"/>
+
+    <bpmn:textAnnotation id="Ann_Tempo_RegistrarWMS">
+      <bpmn:text>Tempo</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Assoc_RegistrarWMS_Tempo" sourceRef="Task_RegistrarWMS" targetRef="Ann_Tempo_RegistrarWMS"/>
+
+    <!-- Fluxos -->
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="Start_Inicio" targetRef="Task_RegistrarDoca"/>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_RegistrarDoca" targetRef="Task_ConferirNotasAgendar"/>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_ConferirNotasAgendar" targetRef="Gw_NotasOk"/>
+    <bpmn:sequenceFlow id="Flow_4_Sim" name="Sim" sourceRef="Gw_NotasOk" targetRef="Gw_Agendamento">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Sim</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_5_Nao" name="Não" sourceRef="Gw_NotasOk" targetRef="Task_ConferirNotasAgendar">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Não</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_6_Sim" name="Sim" sourceRef="Gw_Agendamento" targetRef="Event_Timer_Aguardar">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Sim</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_7_Nao" name="Não" sourceRef="Gw_Agendamento" targetRef="Event_Message_AvisarAgendar">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Não</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="Event_Message_AvisarAgendar" targetRef="End_FaltaAgendamento"/>
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="Event_Timer_Aguardar" targetRef="Task_Inspecionar"/>
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_Inspecionar" targetRef="Gw_Aprovado"/>
+    <bpmn:sequenceFlow id="Flow_11_Sim" name="Sim" sourceRef="Gw_Aprovado" targetRef="Task_RegistrarWMS">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Sim</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_12_Nao" name="Não" sourceRef="Gw_Aprovado" targetRef="Task_SegregarCAPA">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Não</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_13" sourceRef="Task_SegregarCAPA" targetRef="End_NaoConforme"/>
+    <bpmn:sequenceFlow id="Flow_14" sourceRef="Task_RegistrarWMS" targetRef="Gw_DivergenciaFiscal"/>
+    <bpmn:sequenceFlow id="Flow_15_Nao" name="Não" sourceRef="Gw_DivergenciaFiscal" targetRef="End_Concluida">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Não</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_16_Sim" name="Sim" sourceRef="Gw_DivergenciaFiscal" targetRef="Task_RegularizarFiscal">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">Sim</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_17" sourceRef="Task_RegularizarFiscal" targetRef="End_AposFiscal"/>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Devolucao_CD">
+    <bpmndi:BPMNPlane id="BPMNPlane_Devolucao_CD" bpmnElement="Process_Devolucao_CD">
+      <!-- Pool/Process -->
+      <bpmndi:BPMNShape id="Shape_Process" bpmnElement="Process_Devolucao_CD" isExpanded="true">
+        <dc:Bounds x="150" y="80" width="1900" height="520"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="Shape_Lane_Transportador" bpmnElement="Lane_Transportador" isHorizontal="true">
+        <dc:Bounds x="150" y="100" width="1900" height="120"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Recebimento" bpmnElement="Lane_Recebimento" isHorizontal="true">
+        <dc:Bounds x="150" y="220" width="1900" height="120"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Qualidade" bpmnElement="Lane_Qualidade" isHorizontal="true">
+        <dc:Bounds x="150" y="340" width="1900" height="120"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Lane_Fiscal" bpmnElement="Lane_Fiscal" isHorizontal="true">
+        <dc:Bounds x="150" y="460" width="1900" height="120"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Shapes -->
+      <bpmndi:BPMNShape id="Shape_Start_Inicio" bpmnElement="Start_Inicio">
+        <dc:Bounds x="180" y="130" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_RegistrarDoca" bpmnElement="Task_RegistrarDoca">
+        <dc:Bounds x="330" y="110" width="120" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_ConferirNotasAgendar" bpmnElement="Task_ConferirNotasAgendar">
+        <dc:Bounds x="540" y="230" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Gw_NotasOk" bpmnElement="Gw_NotasOk" isMarkerVisible="true">
+        <dc:Bounds x="710" y="245" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Gw_Agendamento" bpmnElement="Gw_Agendamento" isMarkerVisible="true">
+        <dc:Bounds x="860" y="245" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Event_Timer_Aguardar" bpmnElement="Event_Timer_Aguardar">
+        <dc:Bounds x="1010" y="255" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Event_Message_AvisarAgendar" bpmnElement="Event_Message_AvisarAgendar">
+        <dc:Bounds x="1010" y="305" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_End_FaltaAgendamento" bpmnElement="End_FaltaAgendamento">
+        <dc:Bounds x="1160" y="305" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_Inspecionar" bpmnElement="Task_Inspecionar">
+        <dc:Bounds x="1160" y="350" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Gw_Aprovado" bpmnElement="Gw_Aprovado" isMarkerVisible="true">
+        <dc:Bounds x="1330" y="365" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_SegregarCAPA" bpmnElement="Task_SegregarCAPA">
+        <dc:Bounds x="1480" y="350" width="160" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_End_NaoConforme" bpmnElement="End_NaoConforme">
+        <dc:Bounds x="1660" y="365" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_RegistrarWMS" bpmnElement="Task_RegistrarWMS">
+        <dc:Bounds x="1480" y="230" width="160" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Gw_DivergenciaFiscal" bpmnElement="Gw_DivergenciaFiscal" isMarkerVisible="true">
+        <dc:Bounds x="1660" y="245" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_End_Concluida" bpmnElement="End_Concluida">
+        <dc:Bounds x="1810" y="255" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_RegularizarFiscal" bpmnElement="Task_RegularizarFiscal">
+        <dc:Bounds x="1810" y="470" width="180" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_End_AposFiscal" bpmnElement="End_AposFiscal">
+        <dc:Bounds x="2000" y="485" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Annotations Shapes -->
+      <bpmndi:BPMNShape id="Shape_Ann_Tempo_RegistrarDoca" bpmnElement="Ann_Tempo_RegistrarDoca">
+        <dc:Bounds x="330" y="200" width="120" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Ann_Tempo_ConferirAgendar" bpmnElement="Ann_Tempo_ConferirAgendar">
+        <dc:Bounds x="540" y="320" width="140" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Ann_Tempo_Inspecionar" bpmnElement="Ann_Tempo_Inspecionar">
+        <dc:Bounds x="1160" y="440" width="140" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Ann_Tempo_RegistrarWMS" bpmnElement="Ann_Tempo_RegistrarWMS">
+        <dc:Bounds x="1480" y="320" width="160" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Sequence Flow Edges -->
+      <bpmndi:BPMNEdge id="Edge_Flow_1" bpmnElement="Flow_1">
+        <di:waypoint x="216" y="148"/>
+        <di:waypoint x="330" y="148"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_2" bpmnElement="Flow_2">
+        <di:waypoint x="450" y="150"/>
+        <di:waypoint x="540" y="270"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_3" bpmnElement="Flow_3">
+        <di:waypoint x="680" y="270"/>
+        <di:waypoint x="710" y="270"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_4_Sim" bpmnElement="Flow_4_Sim">
+        <di:waypoint x="760" y="270"/>
+        <di:waypoint x="860" y="270"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_5_Nao" bpmnElement="Flow_5_Nao">
+        <di:waypoint x="735" y="295"/>
+        <di:waypoint x="735" y="340"/>
+        <di:waypoint x="610" y="340"/>
+        <di:waypoint x="610" y="310"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_6_Sim" bpmnElement="Flow_6_Sim">
+        <di:waypoint x="910" y="270"/>
+        <di:waypoint x="1010" y="273"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_7_Nao" bpmnElement="Flow_7_Nao">
+        <di:waypoint x="885" y="295"/>
+        <di:waypoint x="885" y="323"/>
+        <di:waypoint x="1010" y="323"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_8" bpmnElement="Flow_8">
+        <di:waypoint x="1046" y="323"/>
+        <di:waypoint x="1160" y="323"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_9" bpmnElement="Flow_9">
+        <di:waypoint x="1046" y="273"/>
+        <di:waypoint x="1160" y="273"/>
+        <di:waypoint x="1160" y="390"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_10" bpmnElement="Flow_10">
+        <di:waypoint x="1300" y="390"/>
+        <di:waypoint x="1330" y="390"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_11_Sim" bpmnElement="Flow_11_Sim">
+        <di:waypoint x="1380" y="390"/>
+        <di:waypoint x="1380" y="270"/>
+        <di:waypoint x="1480" y="270"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_12_Nao" bpmnElement="Flow_12_Nao">
+        <di:waypoint x="1355" y="415"/>
+        <di:waypoint x="1355" y="390"/>
+        <di:waypoint x="1480" y="390"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_13" bpmnElement="Flow_13">
+        <di:waypoint x="1640" y="390"/>
+        <di:waypoint x="1660" y="390"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_14" bpmnElement="Flow_14">
+        <di:waypoint x="1640" y="270"/>
+        <di:waypoint x="1660" y="270"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_15_Nao" bpmnElement="Flow_15_Nao">
+        <di:waypoint x="1710" y="270"/>
+        <di:waypoint x="1810" y="273"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_16_Sim" bpmnElement="Flow_16_Sim">
+        <di:waypoint x="1685" y="295"/>
+        <di:waypoint x="1685" y="510"/>
+        <di:waypoint x="1810" y="510"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Edge_Flow_17" bpmnElement="Flow_17">
+        <di:waypoint x="1990" y="510"/>
+        <di:waypoint x="2000" y="503"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Association Edges -->
+      <bpmndi:BPMNEdge id="Edge_Assoc_RegistrarDoca_Tempo" bpmnElement="Assoc_RegistrarDoca_Tempo">
+        <di:waypoint x="390" y="190"/>
+        <di:waypoint x="390" y="200"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Assoc_ConferirAgendar_Tempo" bpmnElement="Assoc_ConferirAgendar_Tempo">
+        <di:waypoint x="610" y="310"/>
+        <di:waypoint x="610" y="320"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Assoc_Inspecionar_Tempo" bpmnElement="Assoc_Inspecionar_Tempo">
+        <di:waypoint x="1230" y="430"/>
+        <di:waypoint x="1230" y="440"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Assoc_RegistrarWMS_Tempo" bpmnElement="Assoc_RegistrarWMS_Tempo">
+        <di:waypoint x="1560" y="310"/>
+        <di:waypoint x="1560" y="320"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

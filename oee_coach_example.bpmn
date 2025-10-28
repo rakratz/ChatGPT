@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_OEE_Coach"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_OEE_Coach" name="OEE Coach — Cálculo e Micro‑Plano" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_OEE" name="Start"/>
+    <bpmn:task id="Task_Coletar" name="Coletar dados de produção"/>
+    <bpmn:task id="Task_CalcularOEE" name="Calcular OEE (A×P×Q)"/>
+    <bpmn:exclusiveGateway id="Gateway_Meta" name="OEE &lt; Meta?"/>
+    <bpmn:task id="Task_Disp" name="Analisar perdas de Disponibilidade"/>
+    <bpmn:task id="Task_Perf" name="Analisar perdas de Performance"/>
+    <bpmn:task id="Task_Qual" name="Analisar perdas de Qualidade"/>
+    <bpmn:task id="Task_Plan" name="Definir micro‑plano de ataque"/>
+    <bpmn:endEvent id="EndEvent_OEE" name="Plano definido"/>
+    <bpmn:sequenceFlow id="F1" sourceRef="StartEvent_OEE" targetRef="Task_Coletar"/>
+    <bpmn:sequenceFlow id="F2" sourceRef="Task_Coletar" targetRef="Task_CalcularOEE"/>
+    <bpmn:sequenceFlow id="F3" sourceRef="Task_CalcularOEE" targetRef="Gateway_Meta"/>
+    <bpmn:sequenceFlow id="F4" sourceRef="Gateway_Meta" targetRef="Task_Disp">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Disponibilidade é o menor pilar</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F5" sourceRef="Gateway_Meta" targetRef="Task_Perf">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Performance é o menor pilar</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F6" sourceRef="Gateway_Meta" targetRef="Task_Qual">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">Qualidade é o menor pilar</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F7" sourceRef="Task_Disp" targetRef="Task_Plan"/>
+    <bpmn:sequenceFlow id="F8" sourceRef="Task_Perf" targetRef="Task_Plan"/>
+    <bpmn:sequenceFlow id="F9" sourceRef="Task_Qual" targetRef="Task_Plan"/>
+    <bpmn:sequenceFlow id="F10" sourceRef="Task_Plan" targetRef="EndEvent_OEE"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_OEE">
+    <bpmndi:BPMNPlane id="BPMNPlane_OEE" bpmnElement="Process_OEE_Coach">
+      <bpmndi:BPMNShape id="StartEvent_OEE_di" bpmnElement="StartEvent_OEE">
+        <dc:Bounds x="150" y="160" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Coletar_di" bpmnElement="Task_Coletar">
+        <dc:Bounds x="220" y="140" width="140" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CalcularOEE_di" bpmnElement="Task_CalcularOEE">
+        <dc:Bounds x="390" y="140" width="160" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Meta_di" bpmnElement="Gateway_Meta" isMarkerVisible="true">
+        <dc:Bounds x="590" y="155" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Disp_di" bpmnElement="Task_Disp">
+        <dc:Bounds x="690" y="40" width="210" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Perf_di" bpmnElement="Task_Perf">
+        <dc:Bounds x="690" y="140" width="210" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Qual_di" bpmnElement="Task_Qual">
+        <dc:Bounds x="690" y="240" width="210" height="70"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Plan_di" bpmnElement="Task_Plan">
+        <dc:Bounds x="940" y="140" width="200" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_OEE_di" bpmnElement="EndEvent_OEE">
+        <dc:Bounds x="1180" y="162" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1">
+        <di:waypoint x="186" y="178"/>
+        <di:waypoint x="220" y="180"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F2_di" bpmnElement="F2">
+        <di:waypoint x="360" y="180"/>
+        <di:waypoint x="390" y="180"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F3_di" bpmnElement="F3">
+        <di:waypoint x="550" y="180"/>
+        <di:waypoint x="590" y="180"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F4_di" bpmnElement="F4">
+        <di:waypoint x="615" y="155"/>
+        <di:waypoint x="615" y="75"/>
+        <di:waypoint x="690" y="75"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F5_di" bpmnElement="F5">
+        <di:waypoint x="640" y="180"/>
+        <di:waypoint x="690" y="175"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F6_di" bpmnElement="F6">
+        <di:waypoint x="615" y="205"/>
+        <di:waypoint x="615" y="275"/>
+        <di:waypoint x="690" y="275"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F7_di" bpmnElement="F7">
+        <di:waypoint x="900" y="75"/>
+        <di:waypoint x="940" y="180"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_di" bpmnElement="F8">
+        <di:waypoint x="900" y="175"/>
+        <di:waypoint x="940" y="180"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F9_di" bpmnElement="F9">
+        <di:waypoint x="900" y="275"/>
+        <di:waypoint x="940" y="180"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
+        <di:waypoint x="1140" y="180"/>
+        <di:waypoint x="1180" y="180"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
